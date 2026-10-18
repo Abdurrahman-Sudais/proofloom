@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {JSDOM} from 'jsdom';
+test('interactive workflow in a DOM simulation (not browser layout QA)',async()=>{
+ const dom=new JSDOM('<div id="app"></div>',{url:'https://proofloom.space/'});const w=dom.window;
+ globalThis.window=w;globalThis.document=w.document;Object.defineProperty(globalThis,'navigator',{value:w.navigator,configurable:true});globalThis.HTMLElement=w.HTMLElement;globalThis.IS_REACT_ACT_ENVIRONMENT=true;
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
+ let download=false;let copied='';globalThis.URL.createObjectURL=()=>{download=true;return 'blob:sample'};globalThis.URL.revokeObjectURL=()=>{};w.HTMLAnchorElement.prototype.click=function(){};Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async s=>{copied=s}}});
+ const React=await import('react');const {act}=React;const {createRoot}=await import('react-dom/client');const {App}=await import('../.ssr/entry-server.js');const root=createRoot(document.getElementById('app'));
+ await act(async()=>root.render(React.createElement(App,{path:'/'})));
+ const text=()=>document.body.textContent;
+ const button=s=>[...document.querySelectorAll('button')].find(b=>b.textContent.trim()===s);
+ const click=async el=>{assert.ok(el,'control exists');await act(async()=>el.dispatchEvent(new w.MouseEvent('click',{bubbles:true})))};
+ const change=async(el,value)=>{const proto=el.tagName==='SELECT'?w.HTMLSelectElement.prototype:el.tagName==='TEXTAREA'?w.HTMLTextAreaElement.prototype:w.HTMLInputElement.prototype;Object.getOwnPropertyDescriptor(proto,'value').set.call(el,value);await act(async()=>el.dispatchEvent(new w.Event(el.tagName==='SELECT'?'change':'input',{bubbles:true})))};
+ await click(document.querySelector('.menu-toggle'));assert.equal(document.querySelector('.menu-toggle').getAttribute('aria-expanded'),'true');await click(document.querySelector('.nav a'));assert.equal(document.querySelector('.menu-toggle').getAttribute('aria-expanded'),'false');
+ await click([...document.querySelectorAll('.finding')][0]);assert.match(document.querySelector('.evidence').textContent,/450 ml.*500 ml/);
+ await click([...document.querySelectorAll('.finding')][1]);assert.match(document.querySelector('.evidence').textContent,/OHW-450.*OHW-500/);
+ await click(button('Review finding'));assert.equal(document.querySelector('dialog').open,true);
+ let selects=document.querySelectorAll('dialog select');await change(selects[0],'Sam · Quality');await change(selects[1],'Ready for re-review');assert.match(document.querySelector('.stats').textContent,/2 Open1 Re-review0 Recorded resolved/);
+ await change(document.querySelector('dialog textarea'),'Please correct the product code.');await act(async()=>document.querySelector('dialog form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true})));assert.match(document.querySelector('.comments').textContent,/Please correct the product code/);
+ await click(document.querySelector('[aria-label="Close finding"]'));
+ await change(document.querySelector('[aria-label="Search review records"]'),'no-result');assert.ok(document.querySelector('.empty'));await change(document.querySelector('[aria-label="Search review records"]'),'');
+ const filters=document.querySelectorAll('.filters select');await change(filters[0],'Product code');assert.equal(document.querySelectorAll('.finding').length,1);await change(filters[1],'Open');assert.ok(document.querySelector('.empty'));await change(filters[1],'Ready for re-review');assert.equal(document.querySelectorAll('.finding').length,1);
+ await click(button('Export report'));assert.equal(download,true);await click(button('Activity'));assert.match(document.querySelector('.activity').textContent,/local comment added/);await click(button('Reset'));assert.match(document.querySelector('.stats').textContent,/3 Open0 Re-review0 Recorded resolved/);assert.equal(document.querySelectorAll('.finding').length,3);assert.match(text(),/Original sample records restored/);
+ assert.equal(button('Record sample decision').disabled,true);
+ for(let n=0;n<3;n++){await click([...document.querySelectorAll('.finding')][n]);await click(button('Review finding'));await change(document.querySelectorAll('dialog select')[1],'Resolution recorded (unverified)');await click(document.querySelector('[aria-label="Close finding"]'));}
+ assert.match(document.querySelector('.workspace .art-sheet').textContent,/500 ml/);assert.match(document.querySelector('.workspace .art-sheet').textContent,/OHW-500/);assert.match(document.querySelector('.artwork-verification').textContent,/Original sample, unchanged/);assert.match(document.querySelector('.artwork-verification').textContent,/do not verify a correction/);
+ assert.equal(button('Record sample decision').disabled,true);await click(document.querySelector('.approval input'));assert.equal(button('Record sample decision').disabled,false);await click(button('Record sample decision'));assert.match(document.querySelector('.badge').textContent,/Sample decision recorded/);
+ await click(button('Review finding'));await change(document.querySelectorAll('dialog select')[1],'Open');await click(document.querySelector('[aria-label="Close finding"]'));assert.equal(document.querySelector('.badge').textContent,'Not approved for print');assert.equal(document.querySelector('.approval input').checked,false);await click(button('Reset'));
+
+ await click(button('Specifications'));await click(button('Confirm sample fields'));await act(async()=>new Promise(r=>setTimeout(r,400)));assert.match(document.querySelector('.notice').textContent,/No OCR or AI processing/);await click(button('Artwork Versions'));assert.match(document.querySelector('.tab-intro').textContent,/Artwork v3/);
+ const form=document.querySelector('.contact-form');await change(form.querySelector('input'),'Sample Visitor');await change(form.querySelector('input[type="email"]'),'sample@example.com');await change(form.querySelector('textarea'),'We review cartons.');await click(button('Copy message'));assert.match(copied,/We review cartons/);await act(async()=>form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true})));assert.match(form.textContent,/You must send it through your email application/);assert.equal(form.querySelector('textarea').value,'We review cartons.');assert.ok([...document.querySelectorAll('a[href^="mailto:"]')].every(a=>a.getAttribute('href')==='mailto:tolu@proofloom.space'));
+ await act(async()=>root.unmount());dom.window.close();
+});
