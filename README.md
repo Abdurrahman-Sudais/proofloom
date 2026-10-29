@@ -26,10 +26,13 @@ npm run dev
 ```sh
 npm run build
 npm test
+npm run test:backend
 npm run preview
 ```
 
-Run the build before tests: tests import the generated SSR module and inspect the generated HTML. Preview usually runs at http://localhost:4173. The build creates `dist/` with prerendered Home, Privacy, Terms, Brand and 404 HTML. The headline and main description are in HTML before JavaScript runs. Development uses Vite's fallback and React selects routes; production serves the prerendered files. Unknown paths render the real not-found experience. Browser back/forward works via normal page navigation.
+`npm run test:backend` runs the Python Lambda tests (standard library only, Python 3.10+).
+
+Run the build before tests: tests import the generated SSR module and inspect the generated HTML. Preview usually runs at http://localhost:4173. `vite preview` does not resolve clean URLs, so open `/app/`, `/privacy/` and similar paths with a trailing slash there; Vercel and Cloudflare serve the clean paths. The build creates `dist/` with prerendered Home, Prototype (`/app`), Privacy, Terms, Brand and 404 HTML. The headline and main description are in HTML before JavaScript runs. Development uses Vite's fallback and React selects routes; production serves the prerendered files. Unknown paths render the real not-found experience. Browser back/forward works via normal page navigation.
 
 `npm test` uses Node tests and jsdom. It is not a real-browser visual, screen-reader, device, or email-delivery test. Test code never sends mail or calls AWS.
 
@@ -58,6 +61,36 @@ Sitemap: https://proofloom.space/sitemap.xml
 
 - Finalise Privacy and Terms, confirm operator facts, run `npm run build` and `npm test`, then deploy only when instructed. Review-specific indexing tests must be updated deliberately when launch is approved.
 
+## Interactive prototype (`/app`)
+
+A full packaging-review workspace that runs in the browser with fictional data. Open it from the hero, the header or the prototype section. Use **Demo as** in the top bar to switch person and role, and **Reset demo data** to restore the seed.
+
+- **Reviewer** (Alex Rivera, Sam Okafor): dashboard; reviews list with search and filters; **New review** (with “Fill with an example”); and per review: *Specification* (correct and confirm extracted fields), *Compare* (side by side, any version), *Findings* (confirm or dismiss AI suggestions, request corrections, accept with a reason, assign, comment, see history), *Versions* (diff between versions), *Print decision* (checklist gate, two-person approval) and *Activity*. Exports a text report and a findings CSV.
+- **Artwork studio** (Jo Lindqvist): sees only the correction requests, replies in context, and uploads a corrected version. The comparison re-runs automatically: fixed issues become “Verified fixed” and anything remaining becomes “Still present”.
+- **Administrator** (Priya Nair): aggregate overview, users and roles, policy (AI on/off, daily AI cap, two-person approval, critical-fix rule), retention windows with a dry-run preview, audit log with CSV export, permissions matrix.
+
+Try this path: as Alex, open Orchard Hand Wash → Findings → confirm the AI claim suggestion → **Send 4 to studio**. Switch to Jo → prepare a corrected version (450 ml, OHW-450, add the storage wording, remove the claim) → upload. Switch to Alex → Print decision → record it. Switch to Sam → confirm as second approver.
+
+**Real in the prototype:** the comparison engine (`src/app/engine.mjs`: unit-converting quantity checks, code checks, GS1 check digits, wording and list checks); re-check reconciliation across versions; the decision gate and two-person rule; role permissions on every action; the audit log; policy enforcement; retention preview; exports; persistence in `localStorage` (key `proofloom-prototype-v1`).
+**Simulated:** extraction (you type the values that extraction would produce), AI suggestions (a deterministic claim rule with the same output shape as Bedrock), and sign-in (the role switch).
+
+## Website sections added
+
+Prototype call to action, benefits (`#benefits`), use cases (`#use-cases`), safeguards (`#safeguards`), plans (`#pricing`: “Pricing on request”; no prices are invented), and FAQ (`#faq`). The header links Safeguards, Pricing and FAQ. Order constraint kept: Architecture → Team (`#leadership`) → Early access.
+
+## Early-access form
+
+`src/Contact.jsx` collects name, work email, company, company type, role, monthly artwork volume and a message, with a required consent box, an optional updates box and a hidden honeypot. By default it still opens an email draft, with a copy fallback, and submits nothing. Setting `VITE_HUBSPOT_PORTAL_ID` and `VITE_HUBSPOT_FORM_GUID` at build time sends it to the HubSpot Forms API instead. See `.env.example` and `docs/crm-plan.md`, and update the Privacy draft before switching it on.
+
+## Backend starters (`backend/`, not deployed)
+
+- `lambdas/compare_fields`: deterministic checks in Python, mirroring the prototype engine.
+- `lambdas/suggest_discrepancies`: Amazon Bedrock Converse call with input minimisation and evidence-quote validation. It fails closed.
+- `dynamodb/table.json`: single-table definition (GSIs for status and assignee, KMS, streams).
+- `tests/fixtures/cases.json`: rule fixtures shared by `tests/engine.test.mjs` and `backend/tests/test_lambdas.py`, so the JS and Python rules cannot drift apart.
+
+Design documents: `docs/architecture.md` (AWS design, AI controls, data model, security, retention), `docs/safeguards.md` (review safeguards and test plan), `docs/crm-plan.md` (HubSpot).
+
 ## What is real and what is sample
 
 Implemented: sample review search/filter, evidence selection, accessible native finding dialog, assignments, comments, correction/re-review status, activity, explicit human sample decision, text report export, reset, email-draft form, copy fallback, legal draft routes, brand downloads, metadata and static prerendering.
@@ -68,7 +101,10 @@ Not connected: file uploads, OCR, AI comparison, AWS storage, authentication, re
 
 ## Project structure
 
-- `src/App.jsx`: marketing, navigation, legal and brand routes.
+- `src/App.jsx`: marketing, navigation, legal, brand and prototype routes.
+- `src/Sections.jsx`: prototype CTA, benefits, use cases, safeguards, plans, FAQ.
+- `src/lead.mjs`: early-access validation and HubSpot payload.
+- `src/app/`: prototype (`engine.mjs` rules, `actions.mjs` permission-checked state changes, `seed.mjs` fictional data, `Prototype.jsx` shell, role views, `app.css`).
 - `src/Demo.jsx`: sample review workspace.
 - `src/Sources.jsx`: specification and artwork visuals.
 - `src/Contact.jsx`: email draft and copy fallback.
@@ -77,7 +113,8 @@ Not connected: file uploads, OCR, AI comparison, AWS storage, authentication, re
 - `src/style.css`: responsive visual system, focus and reduced-motion rules.
 - `scripts/prerender.mjs`: static route HTML and metadata.
 - `public/brand`: original vector logo, transparent PNG exports, icons and social image.
-- `tests`: model, generated output and simulated DOM checks.
+- `tests`: model, engine, workflow, generated output and simulated DOM checks (site and prototype).
+- `backend`: proposed Lambda code, DynamoDB table definition and Python tests.
 - `docs`: QA, private handover and optional Product Hunt draft.
 
 Fonts: system Arial/Helvetica and Georgia/Times New Roman fallbacks; no webfont downloads. The supplied logo wordmark is outlined from DejaVu Sans and is editable vector geometry. See `THIRD_PARTY_NOTICES.md` and bundled font licence.

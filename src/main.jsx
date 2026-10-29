@@ -2,6 +2,7 @@ import React from 'react';
 import {hydrateRoot,createRoot} from 'react-dom/client';
 import App from './App.jsx';
 import './style.css';
+import './app/app.css';
 const element=document.getElementById('root');
 const node=<App path={globalThis.__proofloomPreview?'/':location.pathname}/>;
 const root=element.children.length?hydrateRoot(element,node):createRoot(element);

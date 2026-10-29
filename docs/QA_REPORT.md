@@ -45,3 +45,19 @@ AWS services remain proposed, with no live OCR/AI/backend processing. No email d
 Repeated `npm run build`, `npm test` (12/12 passed), offline preview generation and the offline jsdom check before packaging. Rechecked every static navigation/anchor, legal-route and download-asset target. Compared all src and public files byte-for-byte against the previous approved source delivery: no application or asset changes were made in this packaging request. The recent approved preview also contains the matching full leadership names, leadership anchor and unverified-artwork notices.
 
 The resulting source ZIP includes dependency declarations and lockfile, not the generated node_modules folder. README includes exact npm installation/build/preview commands, numbered Vercel deployment steps, static-host route behaviour, and instructions for removing review noindex while keeping brand/404 excluded. Configuration and real-browser test limitations above remain applicable.
+
+
+## StudyPatch-parity revision — 2026-10-29
+
+Scope: added the interactive multi-role prototype (`/app`), new site sections (prototype CTA, benefits, use cases, safeguards, plans, FAQ), a CRM-ready early-access form, design docs (`architecture.md`, `safeguards.md`, `crm-plan.md`), and backend starters (`backend/`). Existing routes, the leadership order (Architecture → Team → Early access), the noindex configuration and the home-page demo are unchanged.
+
+Commands run:
+- `npm run build`: passed. Prerenders Home, Prototype, Privacy, Terms, Brand and 404.
+- `npm test`: 24/24 passed. New suites: `engine.test.mjs` (shared rule fixtures, GS1 check digits, units, claim suggestions, seed integrity), `workflow.test.mjs` (permissions, spec gate, verified fixes, waiver policy, revocation, two-person approval, AI cap, retention preview), and `prototype.test.mjs` (prerendered `/app`; full three-role UI loop in jsdom with persistence and reset). `interactions.test.mjs` was updated for the new required form fields and consent.
+- `npm run test:backend`: 7/7 passed (same fixtures as the JS engine; evidence validation; fail-closed parsing; identifier rejection).
+- `node scripts/offline-preview.mjs` and `node scripts/check-offline.mjs`: passed. The offline preview was also opened in headless Chromium: home → prototype → review → back to home, with no page errors.
+- Headless Chromium (Playwright) at 1440×900 and 390×844 on the home page, `/app/`, a review's Findings and Compare tabs, and `/privacy/`: no console or page errors and no horizontal overflow. The mobile footer previously overflowed by 48 px after the new links were added; it now wraps.
+
+Not claimed: screen-reader and real-device checks, live HubSpot submission (not configured), and anything AWS (nothing is deployed).
+
+Owner decisions still open: real prices (the plans say “Pricing on request”); HubSpot portal/form IDs and the matching Privacy wording; a company LinkedIn URL if one should appear (StudyPatch has one; none was supplied for Proofloom).
