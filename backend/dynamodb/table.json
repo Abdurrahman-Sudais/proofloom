@@ -1,0 +1,39 @@
+{
+  "_comment": "aws dynamodb create-table --cli-input-json file://backend/dynamodb/table.json (remove this _comment key first). Single-table design; access patterns and item shapes are in docs/architecture.md section 3. Not yet deployed.",
+  "TableName": "proofloom-reviews",
+  "BillingMode": "PAY_PER_REQUEST",
+  "AttributeDefinitions": [
+    { "AttributeName": "PK", "AttributeType": "S" },
+    { "AttributeName": "SK", "AttributeType": "S" },
+    { "AttributeName": "GSI1PK", "AttributeType": "S" },
+    { "AttributeName": "GSI1SK", "AttributeType": "S" },
+    { "AttributeName": "GSI2PK", "AttributeType": "S" },
+    { "AttributeName": "GSI2SK", "AttributeType": "S" }
+  ],
+  "KeySchema": [
+    { "AttributeName": "PK", "KeyType": "HASH" },
+    { "AttributeName": "SK", "KeyType": "RANGE" }
+  ],
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "GSI1-status",
+      "KeySchema": [
+        { "AttributeName": "GSI1PK", "KeyType": "HASH" },
+        { "AttributeName": "GSI1SK", "KeyType": "RANGE" }
+      ],
+      "Projection": { "ProjectionType": "INCLUDE", "NonKeyAttributes": ["product", "status", "owner", "latestVersion"] }
+    },
+    {
+      "IndexName": "GSI2-assignee",
+      "KeySchema": [
+        { "AttributeName": "GSI2PK", "KeyType": "HASH" },
+        { "AttributeName": "GSI2SK", "KeyType": "RANGE" }
+      ],
+      "Projection": { "ProjectionType": "KEYS_ONLY" }
+    }
+  ],
+  "SSESpecification": { "Enabled": true, "SSEType": "KMS", "KMSMasterKeyId": "alias/proofloom-data" },
+  "StreamSpecification": { "StreamEnabled": true, "StreamViewType": "NEW_AND_OLD_IMAGES" },
+  "DeletionProtectionEnabled": true,
+  "Tags": [{ "Key": "app", "Value": "proofloom" }]
+}

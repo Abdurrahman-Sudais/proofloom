@@ -1,0 +1,23 @@
+{
+  "_comment": "Shared rule fixtures. tests/engine.test.mjs (prototype) and backend/tests/test_compare_fields.py (Lambda) must both produce the listed issue types, in order.",
+  "fields": [
+    { "name": "same quantity, different unit spelling", "field": { "key": "q", "label": "Net quantity", "kind": "quantity", "value": "450 ml", "critical": true }, "actual": "0,45 L", "types": [] },
+    { "name": "quantity without space", "field": { "key": "q", "label": "Net quantity", "kind": "quantity", "value": "175 g" }, "actual": "175g", "types": [] },
+    { "name": "quantity differs", "field": { "key": "q", "label": "Net quantity", "kind": "quantity", "value": "450 ml", "critical": true }, "actual": "500 ml", "types": ["mismatch"], "severity": "critical" },
+    { "name": "quantity unit type differs", "field": { "key": "q", "label": "Net quantity", "kind": "quantity", "value": "250 g" }, "actual": "250 ml", "types": ["mismatch"] },
+    { "name": "quantity unreadable", "field": { "key": "q", "label": "Net quantity", "kind": "quantity", "value": "250 g" }, "actual": "two hundred fifty", "types": ["unreadable"] },
+    { "name": "kg equals g", "field": { "key": "q", "label": "Net quantity", "kind": "quantity", "value": "250 g" }, "actual": "0.25 kg", "types": [] },
+    { "name": "code case and spaces ignored", "field": { "key": "c", "label": "Product code", "kind": "code", "value": "OHW-450" }, "actual": "ohw-450 ", "types": [] },
+    { "name": "code differs", "field": { "key": "c", "label": "Product code", "kind": "code", "value": "OHW-450" }, "actual": "OHW-500", "types": ["mismatch"], "severity": "major" },
+    { "name": "valid matching barcode", "field": { "key": "b", "label": "Barcode", "kind": "gtin", "value": "5012345000459" }, "actual": "5012345000459", "types": [] },
+    { "name": "barcode with bad check digit", "field": { "key": "b", "label": "Barcode", "kind": "gtin", "value": "5012345001128" }, "actual": "5012345001125", "types": ["invalid-gtin", "mismatch"] },
+    { "name": "valid but different barcode", "field": { "key": "b", "label": "Barcode", "kind": "gtin", "value": "5012345001128" }, "actual": "5012345000459", "types": ["mismatch"] },
+    { "name": "wording identical except punctuation and case", "field": { "key": "t", "label": "Storage", "kind": "text", "value": "Store in a cool, dry place." }, "actual": "store in a cool dry place", "types": [] },
+    { "name": "wording differs", "field": { "key": "t", "label": "Date wording", "kind": "text", "value": "Best before: see side of pack." }, "actual": "Best before end: see side of pack.", "types": ["wording"], "severity": "minor" },
+    { "name": "required wording missing", "field": { "key": "t", "label": "Storage", "kind": "text", "value": "Store in a cool, dry place." }, "actual": "", "types": ["missing"], "severity": "major" },
+    { "name": "critical wording missing", "field": { "key": "w", "label": "Warning", "kind": "text", "value": "Keep out of reach of children.", "critical": true }, "actual": "", "types": ["missing"], "severity": "critical" },
+    { "name": "allergen missing and one extra", "field": { "key": "a", "label": "Allergens", "kind": "list", "value": ["Oats (gluten)", "Milk", "Almonds"], "critical": true }, "actual": ["oats (gluten)", "Milk", "Soya"], "types": ["missing-item", "extra-item"], "severity": "critical" },
+    { "name": "allergens complete in a different order", "field": { "key": "a", "label": "Allergens", "kind": "list", "value": ["Milk", "Almonds"] }, "actual": "Almonds, Milk", "types": [] }
+  ],
+  "gtin": { "valid": ["5012345000459", "5012345001128", "5012345002286", "5012345003351", "96385074", "036000291452"], "invalid": ["5012345001125", "12345", "50123450004590", "abcdefghijklm"] }
+}
