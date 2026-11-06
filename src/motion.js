@@ -4,7 +4,8 @@ export function startMotion({hero = '.hero', heroVisual = null, autoReveal = 'ma
   if (typeof window === 'undefined' || window.__ppMotion) return;
   window.__ppMotion = true;
   const doc = document.documentElement;
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mq = (q) => (typeof window.matchMedia === 'function' ? window.matchMedia(q).matches : false);
+  const reduced = mq('(prefers-reduced-motion: reduce)') || typeof IntersectionObserver === 'undefined';
   const show = (el) => el.setAttribute('data-rv-in', '');
 
   // Tag existing content so it reveals as it scrolls in (attributes, so React re-renders leave them alone).
@@ -75,7 +76,7 @@ export function startMotion({hero = '.hero', heroVisual = null, autoReveal = 'ma
   frame();
 
   // Tilt + spotlight on cards, gentle magnetic pull on primary buttons
-  const fine = window.matchMedia('(pointer: fine)').matches;
+  const fine = mq('(pointer: fine)');
   if (fine) {
     document.addEventListener('pointermove', (e) => {
       const card = e.target.closest?.('.pp-tilt');
