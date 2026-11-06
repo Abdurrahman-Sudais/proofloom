@@ -134,3 +134,12 @@ The People Building Proofloom appears after Architecture and before Early Access
 This is the complete runnable project, not only a standalone HTML preview. It includes all application modules, public assets, brand and legal routes, build configuration, scripts, tests, package.json, package-lock.json, .env.example, and the generated dist output. Dependency declarations and exact resolved versions are included; run `npm ci` to install them. The generated node_modules folder, caches and secrets are intentionally excluded.
 
 The optional offline preview is included beside the proofloom folder. It is not a substitute for the source project or deployment output.
+
+## Purpose & motion update
+
+- New purpose sections on the home page (`src/Purpose.jsx`, copy in `src/purpose-data.js`): a scroll-lit manifesto with Proofloom’s purpose, sourced stakes, a today-vs-with-Proofloom comparison, six principles, a note from the founders and a Now→Later vision timeline. “Purpose” is in the main nav.
+- Motion layer (`src/motion.js`, `src/purpose.css`): masked hero entrance, scroll-progress bar, blur-up reveals across every section, count-up stats with drawn bars, strike-through/tick animations, tilt-and-spotlight cards, magnetic primary buttons, hero parallax, a drawn signature and a scroll-linked timeline. Content stays visible without JavaScript, and everything is static when the visitor prefers reduced motion.
+
+### To confirm
+- Statistics (Loftware/FDA via New Food Magazine; GMA estimate) — re-check figures and links.
+- The founders’ note speaks to purpose only; edit it so it is in Tolu’s and Michael’s own words before launch.

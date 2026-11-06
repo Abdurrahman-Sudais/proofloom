@@ -3,10 +3,13 @@ import {hydrateRoot,createRoot} from 'react-dom/client';
 import App from './App.jsx';
 import './style.css';
 import './app/app.css';
+import './purpose.css';
+import {startMotion} from './motion.js';
 const element=document.getElementById('root');
 const node=<App path={globalThis.__proofloomPreview?'/':location.pathname}/>;
 const root=element.children.length?hydrateRoot(element,node):createRoot(element);
 if(!element.children.length)root.render(node);
+requestAnimationFrame(()=>startMotion({hero:'.hero',heroVisual:'.hero-proof'}));
 if(globalThis.__proofloomPreview){
  document.addEventListener('click',event=>{
   const link=event.target.closest('a');if(!link||link.download||!link.getAttribute('href')?.startsWith('/'))return;
